@@ -1,0 +1,56 @@
+version: '3'
+
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.8.1
+    restart: unless-stopped
+    hostname: elasticsearch
+    container_name: elasticsearch
+    ports:
+      - 9200:9200
+      - 9300:9300
+    environment:
+      ES_JAVA_OPTS: "-Xmx256m -Xms256m"
+      discovery.type: single-node
+      ELASTIC_PASSWORD: changeme
+    volumes:
+      - ./elk-config/elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.8.1
+    restart: unless-stopped
+    hostname: kibana
+    container_name: kibana
+    ports:
+      - 5601:5601
+    volumes:
+      - ./elk-config/kibana/config/kibana.yml:/usr/share/kibana/config/kibana.yml
+    depends_on:
+      - elasticsearch
+
+  # logstash:
+  #   image: docker.elastic.co/logstash/logstash:7.8.1
+  #   restart: unless-stopped
+  #   hostname: logstash
+  #   container_name: logstash
+  #   ports:
+  #     - 5000:5000
+  #     - 9600:9600
+  #   environment:
+  #     LS_JAVA_OPTS: "-Xmx256m -Xms256m"
+  #   volumes:
+  #     - ./elk-config/logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml
+  #     - ./elk-config/logstash/pipeline/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
+  #   depends_on:
+  #     - elasticsearch
+
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:7.8.1
+    restart: unless-stopped
+    hostname: filebeat
+    container_name: filebeat
+    volumes:
+      - ./elk-config/filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml
+      - ./logs/:/usr/share/filebeat/logs/
+    depends_on:
+      - elasticsearch
